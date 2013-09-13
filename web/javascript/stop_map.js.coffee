@@ -3,7 +3,7 @@ class LeafletMap
     "san-francisco": [37.783333, -122.416667]
 
   DEFAULT_ROUTES =
-    'san-francisco': 5
+    'san-francisco': "airbart-dn.csv"
     'geneva':        19
     'zurich':        9
 
@@ -13,13 +13,21 @@ class LeafletMap
     @_generateMapData()
 
     @_loadData()
-    @busStopRadius = 3
+    @busStopRadius  = 3
     @currentRouteID = null
+
+    @_previousPoint = null
 
   # Convert back to lat-long coordinates
   projection: (x) ->
-    point = @_map.latLngToLayerPoint(new L.LatLng(x[1], x[0]))
-    [point.x, point.y]
+    if (x[0] > 0)
+      point = @_map.latLngToLayerPoint(new L.LatLng(x[0], x[1]))
+      @_previousPoint = point
+      [point.x, point.y]
+    else if (@_previousPoint?)
+      [@_previousPoint.x, @_previousPoint.y]
+    else
+      [0, 0]
 
   getWidth: ->
     $('#' + @mapContainerId).width()
@@ -134,7 +142,6 @@ class LeafletMap
 
   newRouteVis: (filename) =>
     self = @
-    console.log('loading', filename)
 
     call_ts_vis = (error, data) -> show_ts(error, data, self)
     @_remoteRequests.push(d3.json(filename, call_ts_vis))
@@ -157,15 +164,15 @@ class LeafletMap
   _routeClick: (elem, d) =>
     __this = @
     route = d3.select(elem)
-    id_route = d.properties.id_route
-    @currentRouteID = id_route
-    d3.selectAll('#route_name').text(toTitleCase(d.properties.name_route))
+    route_id = d.properties.shape_id
+    @currentRouteID = route_id
+    d3.selectAll('#route_name').text(toTitleCase(d.properties.shape_id))
 
     @cancelOtherVis()
 
     # load up the timeseries data for the route
     date = $('select#weekday option:selected').val()
-    filename = "/data/#{@city}/timeseries/#{date}_#{id_route}.json"
+    filename = "/data/#{@city}/timeseries/#{date}_#{route_id}.json"
     @newRouteVis(filename)
 
   _loadData: ->
@@ -181,7 +188,7 @@ class LeafletMap
         .append("circle")
           .attr
             r: @busStopRadius
-            class: (d) -> "bus-stop bus-stop-#{d.properties.id_stop}"
+            class: (d) -> "bus-stop bus-stop-#{d.properties.stop_id}"
           .on("mouseover", (d) -> __this._busStopMouseover(this, d))
           .on("mouseout",  (d) -> __this._busStopMouseout(this, d))
 
@@ -200,13 +207,14 @@ class LeafletMap
       @redraw()
 
       d3.json "/data/#{@city}/routes.json", (routes) =>
+        @_foo = topojson.object(routes, routes.objects.shapes).geometries
         @_busRoutes = @g.selectAll("path.bus-route")
-          .data(topojson.object(routes, routes.objects.routes).geometries).enter()
+          .data(topojson.object(routes, routes.objects.shapes).geometries).enter()
           .append("path").attr(
-            class: (d) -> "bus-route bus-route-#{d.properties.id_route}"
-            d: @_path
+            class: (d) ->  "bus-route bus-route-#{d.properties.shape_id}"
+            d: (d, i) => @_path(@_foo[i])
           )
-            .style("stroke", (d) -> __this._colorScale(d.properties.id_route))
+            .style("stroke", (d) -> __this._colorScale(d.properties.shape_id))
             .on("mouseover", (d) -> __this._routeMouseover(this, d))
             .on("mouseout", (d) -> __this._routeMouseout(this, d))
             .on("click", (d) -> __this._routeClick(this, d))
@@ -214,8 +222,9 @@ class LeafletMap
         # set up a date picker
         $('select#weekday').change(@dateChange)
         # start the thing off with a default route
-        defaultRoute = routes.objects.routes.geometries.filter (route) ->
-          "#{route.properties.id_route}" == "#{DEFAULT_ROUTES[__this.city]}"
+
+        defaultRoute = routes.objects.shapes.geometries.filter (route) ->
+          "#{route.properties.shape_id}" == "#{DEFAULT_ROUTES[__this.city]}"
         @_routeClick(null, defaultRoute[0])
         return
       return

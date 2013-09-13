@@ -6,13 +6,11 @@
     var CITY_CENTER, DEFAULT_ROUTES;
 
     CITY_CENTER = {
-      "san-francisco": [37.783333, -122.416667],
-      geneva: [46.2, 6.15],
-      zurich: [47.366667, 8.55]
+      "san-francisco": [37.783333, -122.416667]
     };
 
     DEFAULT_ROUTES = {
-      'san-francisco': 5,
+      'san-francisco': "airbart-dn.csv",
       'geneva': 19,
       'zurich': 9
     };
@@ -31,13 +29,21 @@
       this._loadData();
       this.busStopRadius = 3;
       this.currentRouteID = null;
+      this._previousPoint = null;
     }
 
     LeafletMap.prototype.projection = function(x) {
       var point;
 
-      point = this._map.latLngToLayerPoint(new L.LatLng(x[1], x[0]));
-      return [point.x, point.y];
+      if (x[0] > 0) {
+        point = this._map.latLngToLayerPoint(new L.LatLng(x[0], x[1]));
+        this._previousPoint = point;
+        return [point.x, point.y];
+      } else if ((this._previousPoint != null)) {
+        return [this._previousPoint.x, this._previousPoint.y];
+      } else {
+        return [0, 0];
+      }
     };
 
     LeafletMap.prototype.getWidth = function() {
@@ -182,7 +188,6 @@
       var call_ts_vis, self;
 
       self = this;
-      console.log('loading', filename);
       call_ts_vis = function(error, data) {
         return show_ts(error, data, self);
       };
@@ -209,16 +214,16 @@
     };
 
     LeafletMap.prototype._routeClick = function(elem, d) {
-      var date, filename, id_route, route, __this;
+      var date, filename, route, route_id, __this;
 
       __this = this;
       route = d3.select(elem);
-      id_route = d.properties.id_route;
-      this.currentRouteID = id_route;
-      d3.selectAll('#route_name').text(toTitleCase(d.properties.name_route));
+      route_id = d.properties.shape_id;
+      this.currentRouteID = route_id;
+      d3.selectAll('#route_name').text(toTitleCase(d.properties.shape_id));
       this.cancelOtherVis();
       date = $('select#weekday option:selected').val();
-      filename = "/data/" + this.city + "/timeseries/" + date + "_" + id_route + ".json";
+      filename = "/data/" + this.city + "/timeseries/" + date + "_" + route_id + ".json";
       return this.newRouteVis(filename);
     };
 
@@ -238,7 +243,7 @@
         _this._busStops = _this.g.selectAll("circle.bus-stop").data(stops.objects.stops.geometries).enter().append("circle").attr({
           r: _this.busStopRadius,
           "class": function(d) {
-            return "bus-stop bus-stop-" + d.properties.id_stop;
+            return "bus-stop bus-stop-" + d.properties.stop_id;
           }
         }).on("mouseover", function(d) {
           return __this._busStopMouseover(this, d);
@@ -267,13 +272,16 @@
         d3.json("/data/" + _this.city + "/routes.json", function(routes) {
           var defaultRoute;
 
-          _this._busRoutes = _this.g.selectAll("path.bus-route").data(topojson.object(routes, routes.objects.routes).geometries).enter().append("path").attr({
+          _this._foo = topojson.object(routes, routes.objects.shapes).geometries;
+          _this._busRoutes = _this.g.selectAll("path.bus-route").data(topojson.object(routes, routes.objects.shapes).geometries).enter().append("path").attr({
             "class": function(d) {
-              return "bus-route bus-route-" + d.properties.id_route;
+              return "bus-route bus-route-" + d.properties.shape_id;
             },
-            d: _this._path
+            d: function(d, i) {
+              return _this._path(_this._foo[i]);
+            }
           }).style("stroke", function(d) {
-            return __this._colorScale(d.properties.id_route);
+            return __this._colorScale(d.properties.shape_id);
           }).on("mouseover", function(d) {
             return __this._routeMouseover(this, d);
           }).on("mouseout", function(d) {
@@ -282,8 +290,8 @@
             return __this._routeClick(this, d);
           });
           $('select#weekday').change(_this.dateChange);
-          defaultRoute = routes.objects.routes.geometries.filter(function(route) {
-            return ("" + route.properties.id_route) === ("" + DEFAULT_ROUTES[__this.city]);
+          defaultRoute = routes.objects.shapes.geometries.filter(function(route) {
+            return ("" + route.properties.shape_id) === ("" + DEFAULT_ROUTES[__this.city]);
           });
           _this._routeClick(null, defaultRoute[0]);
         });
