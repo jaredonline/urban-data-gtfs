@@ -1,0 +1,145 @@
+%head
+  %title="#{page_title} | Dots on the Bus"
+  %link{:href => "/img/favicon.png", :rel => "icon", :type => "image/png"}/
+  %link{:href => "favicon.ico", :rel => "shortcut icon"}/
+  %link{:href => "/styles/leaflet.css", :rel => "stylesheet"}/
+  %link{:href => "/styles/vis.css", :rel => "stylesheet"}/
+  %link{:href => "/styles/bootstrap.min.css", :rel => "stylesheet"}/
+  %script{:src => "/javascript/d3.js", :type => "text/javascript"}  
+  %script{:src => "/javascript/underscore.min.js", :type => "text/javascript"}
+  %script{:src => "/javascript/jquery-1.9.1.min.js", :type => "text/javascript"}
+  %script{:src => "/javascript/leaflet.js", :type => "text/javascript"}
+  %script{:src => "/javascript/topojson.js", :type => "text/javascript"}
+  %script{:src => "/javascript/bootstrap.js", :type => "text/javascript"}
+  %script{:src => "/javascript/utils.js", :type => "text/javascript"}  
+  %script{:src => "/javascript/route_vis.js", :type => "text/javascript"}
+  %link{:href => "http://fonts.googleapis.com/css?family=Coustard", :rel => "stylesheet", :type => "text/css"}/  
+  %meta{:content=>"width=device-width, initial-scale=1.0", :name=>"viewport"}
+  :javascript
+    var _sf_startpt=(new Date()).getTime()
+%body
+  #tooltip.hidden
+    %p
+      %span.route-name{:style => "font-weight: bold"}
+      %span.stop-name
+  #route_vis_panel
+    %h3#route_question.normalOperation
+      %span what is riding
+      %span#route_name="#{defaultRouteName}"
+      %span like at
+    %h3.errorState.hidden
+      %span Sorry, we don't see
+      %span#route_name 1 California
+    %h3
+      %span#time-display
+        %span.time.normalOperation{:style=>'width: 3em; float: left;'} 05:00
+        %span.ampm.normalOperation{:style=>'width: 2em; float: left; text-transform: lowercase;'} AM
+        %span.normalOperation on a
+        %span.errorState.hidden running on
+      %span
+        %select#weekday
+          %option{:value=>20121001} Monday
+          %option{:value=>20121002} Tuesday
+          %option{:value=>20121003} Wednesday
+          %option{:value=>20121004} Thursday
+          %option{:value=>20121005} Friday
+          %option{:value=>20121006} Saturday
+          %option{:value=>20121007} Sunday
+      %span.normalOperation ?
+    #route_vis
+  #map
+  
+  #city-switcher
+    %ul
+      %li 
+        %a{:href=> 'index.html'} San Francisco
+      %li 
+        %a{:href=> 'geneva.html'} Geneva
+      %li 
+        %a{:href=> 'zurich.html'} Zurich
+    %p
+      By 
+      %a{:href=> 'http://adamgreenhall.com'}Adam Greenhall
+      ,
+      %a{:href=> 'http://ameliagreenhall.com'}Amelia Greenhall
+      , &
+      %a{:href=> 'http://jaredonline.github.com/about/'} Jared McFarland. 
+    %a{:href => "#about-modal", :role => "button", "data-toggle" => "modal"} 
+      About.
+
+  / Modal
+  #about-modal.modal.hide.fade{"aria-hidden" => "true", "aria-labelledby" => "myModalLabel", :role => "dialog", :tabindex => "-1"}
+    .modal-header
+      %button.close{"aria-hidden" => "true", "data-dismiss" => "modal", :type => "button"} x
+      %h3#myModalLabel What's it like to ride on that bus?
+    .modal-body
+      %p Sometimes bus riding can feel intimidating, but this visualization proves it: everybody's doing it. Pick a route off the map and watch a day in the life of the line. Buses speed by, passengers jumping on and off. Some lines are slow, some are hopping, and rush hour is often hilarious. 
+      %h4 Where's the data from?
+      %p 
+        The Bay Area
+        %a{:href=>"http://www.meetup.com/Bay-Area-d3-User-Group/"}d3.js user group 
+        put out a call for entries for the Urban Prototyping's
+        %a{:href=>"http://urbanprototyping.org/prototype/challenges/urban-data-challenge-zurich-sf-geneva/"}Urban Data Challenge. 
+        Three cities - Zurich, San Francisco, and Geneva - provided 
+        %a{:href=>"https://github.com/swissnexSF/Urban-Data-Challenge"} public transportation data
+        from the week of October 1-7, 2012. The data includes each bus, the time it arrived at each stop, and how many people got on and off (as counted by lasers), along with the lat/long of each stop and route. The challenge: use the datasets to show something new and interesting.
+      %h4 We found:
+      %p 
+        Swiss cities have a much higher transit ridership and more vehicles on a line at a given time.
+      %h4 Geeky details
+      %h6 Cleaning up the data
+      %p 
+        The raw data needed a lot of processing before we could make our pencil and paper sketch real. Mostly this involved wrangling the three cities into a standard format (so all the column names were the same across the cities), then organizing that into JSON blobs by date and route.
+        Thanks to our favorite tools: 
+        %a{:href=>"http://ipython.org/notebook.html"}IPython Notebook
+        and
+        %a{:href=>"http://pandas.pydata.org/"}Pandas
+        this was easier than it sounds.
+      %h6 Visualizing the data  
+      %p
+        From there, 
+        %a{:href=>"http://d3js.org/"} d3.js
+        takes over. That simulation you're watching? The time is scaled to real time - 24hrs takes is played back over approximately 3min. We kick off a bunch of d3 timers - one for every trip a bus takes along the line. Then, within each trip, more timers get kicked off to add the waiting passengers to each stop and to move the bus so it arrives at each stop at the proper time. The waiting passengers arrive at a random time between when the bus is a few stops away and when it arrives. The passengers who get off at that stop exit the bus and disperse. 
+      %p
+        Clicking a new route on the map loads that route, and the day pulldown switches days, just as you'd expect. And a few things we couldn't resist: The skyline changes color in an ambient display of the time of day, and we drew the little bus in inbound/outbound modes, and also made it turn headlights on at night. Finally, hovering over the stop on the route visualization panel shows the street names of the stop, and highlights the stop location on the map.
+      %h6 Many other awesome things we used.
+      %p
+        Thanks are in order: The map is the beautiful
+        %a{:href=> "http://polymaps.org/ex/pale-dawn.html#12.00/37.7649/-122.4195"} Pale Dawn 
+        map tiles, via 
+        %a{:href=>"http://cloudmade.com/"} CloudMade.  
+        The d3.js layer over the leaflet tiles uses this
+        %a{:href=>"http://bost.ocks.org/mike/leaflet/"} method,
+        and we used 
+        %a{:href=>"https://github.com/mbostock/topojson"}TopoJSON
+        to render the routes and the stops. (Thanks
+        %a{:href=>"https://github.com/swissnexSF/Urban-Data-Challenge/commit/2fe77e36374afd33fbb618d630c5c77d9e2aae8c"}herrstucki
+        for converting for the routes to TopoJSON.) Also thanks to: Heroku, github, and the rest of the open source world.  
+      %h6 We'd love to know what you thought!
+      %p 
+        Say hi on twitter:
+        %a{:href=>"https://twitter.com/ameliagreenhall"} @ameliagreenhall
+        %a{:href=>"https://twitter.com/adamgreenhall"} @adamgreenhall
+        and
+        %a{:href=>"https://twitter.com/jaredmcfarland"} @jaredmcfarland
+      
+  
+  :javascript
+    city_name = "#{city_name}"
+  %script{:src => "/javascript/stop_map.js"}
+
+  :javascript
+    var _sf_async_config = { uid: 45882, domain: 'urban-data.herokuapp.com' };
+    (function() {
+      function loadChartbeat() {
+        window._sf_endpt = (new Date()).getTime();
+        var e = document.createElement('script');
+        e.setAttribute('language', 'javascript');
+        e.setAttribute('type', 'text/javascript');
+        e.setAttribute('src','//static.chartbeat.com/js/chartbeat.js');
+        document.body.appendChild(e);
+      };
+      var oldonload = window.onload;
+      window.onload = (typeof window.onload != 'function') ?
+        loadChartbeat : function() { oldonload(); loadChartbeat(); };
+    })();

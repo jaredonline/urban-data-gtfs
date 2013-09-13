@@ -1,0 +1,2 @@
+ignore /\/_.*/
+# ignore /data/
