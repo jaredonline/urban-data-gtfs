@@ -76,7 +76,6 @@
       if (this._busStops !== undefined) {
         this._busStops.attr({
           cx: function(d, i) {
-            console.log(_this._stopCoordinates[i]);
             return _this.projection(_this._stopCoordinates[i])[0];
           },
           cy: function(d, i) {

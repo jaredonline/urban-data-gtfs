@@ -53,7 +53,7 @@ class LeafletMap
 
     if @_busStops isnt `undefined`
       @_busStops.attr
-        cx: (d, i) => console.log((@_stopCoordinates[i])); @projection(@_stopCoordinates[i])[0]
+        cx: (d, i) => @projection(@_stopCoordinates[i])[0]
         cy: (d, i) => @projection(@_stopCoordinates[i])[1]
 
     if @_busRoutes isnt `undefined`
