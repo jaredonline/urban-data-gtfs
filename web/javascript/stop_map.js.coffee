@@ -135,16 +135,15 @@ class LeafletMap
   newRouteVis: () =>
     self = @
     newDate = $('select#weekday option:selected').val()
-    # url = "http://127.0.0.1:5000/schedule" + 
-    url = "http://hidden-cove-459.herokuapp.com/schedule?" + 
-      "route_id=#{@currentRouteID}&date=#{newDate}"
+    url = "http://hidden-cove-4519.herokuapp.com/schedule?" + 
+      "route_id=#{@currentRouteID}" # + "&date=#{newDate}"
     
     console.log('loading', url)
 
     call_ts_vis = (error, data) -> show_ts(error, data, self)
     @_remoteRequests.push(d3.json(url, call_ts_vis))
 
-  dateChange: () ->
+  dateChange: () =>
     @cancelOtherVis()
     @newRouteVis()
 

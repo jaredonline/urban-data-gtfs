@@ -22,6 +22,7 @@
       this.city = city;
       this._routeClick = __bind(this._routeClick, this);
       this.advanceDate = __bind(this.advanceDate, this);
+      this.dateChange = __bind(this.dateChange, this);
       this.newRouteVis = __bind(this.newRouteVis, this);
       this.cancelOtherVis = __bind(this.cancelOtherVis, this);
       this._generateMap();
@@ -182,7 +183,7 @@
 
       self = this;
       newDate = $('select#weekday option:selected').val();
-      url = "http://hidden-cove-459.herokuapp.com/schedule?" + ("route_id=" + this.currentRouteID + "&date=" + newDate);
+      url = "http://hidden-cove-4519.herokuapp.com/schedule?" + ("route_id=" + this.currentRouteID);
       console.log('loading', url);
       call_ts_vis = function(error, data) {
         return show_ts(error, data, self);
