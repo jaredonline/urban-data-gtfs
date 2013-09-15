@@ -64,9 +64,9 @@
   #about-modal.modal.hide.fade{"aria-hidden" => "true", "aria-labelledby" => "myModalLabel", :role => "dialog", :tabindex => "-1"}
     .modal-header
       %button.close{"aria-hidden" => "true", "data-dismiss" => "modal", :type => "button"} x
-      %h3#myModalLabel What's it like to ride on that bus?
+      %h3#myModalLabel What's it like to ride on that train?
     .modal-body
-      %p Sometimes bus riding can feel intimidating, but this visualization proves it: everybody's doing it. Pick a route off the map and watch a day in the life of the line. Buses speed by, passengers jumping on and off. Some lines are slow, some are hopping, and rush hour is often hilarious.
+      %p Sometimes riding public transit can feel intimidating, but this visualization proves it: everybody's doing it. Pick a route off the map and watch a day in the life of the line. Trains speed by, passengers jumping on and off. Some lines are slow, some are hopping, and rush hour is often hilarious.
       %h4 Where's the data from?
       %p
         The Bay Area
@@ -75,10 +75,10 @@
         %a{:href=>"http://urbanprototyping.org/prototype/challenges/urban-data-challenge-zurich-sf-geneva/"}Urban Data Challenge.
         Three cities - Zurich, San Francisco, and Geneva - provided
         %a{:href=>"https://github.com/swissnexSF/Urban-Data-Challenge"} public transportation data
-        from the week of October 1-7, 2012. The data includes each bus, the time it arrived at each stop, and how many people got on and off (as counted by lasers), along with the lat/long of each stop and route. The challenge: use the datasets to show something new and interesting.
-      %h4 We found:
-      %p
-        Swiss cities have a much higher transit ridership and more vehicles on a line at a given time.
+        from the week of October 1-7, 2012. 
+        From that we built
+        %a{:href => "http://urban-data.herokuapp.com/", :target => "_blank"} the original Dots on a Bus,
+        which won the grand prize and funded this project for Fusepool.
       %h4 Geeky details
       %h6 Cleaning up the data
       %p
