@@ -22,7 +22,6 @@
       this.city = city;
       this._routeClick = __bind(this._routeClick, this);
       this.advanceDate = __bind(this.advanceDate, this);
-      this.dateChange = __bind(this.dateChange, this);
       this.newRouteVis = __bind(this.newRouteVis, this);
       this.cancelOtherVis = __bind(this.cancelOtherVis, this);
       this._generateMap();
@@ -178,25 +177,22 @@
       return this.g.selectAll("circle.bus-stop").classed('highlighted', false);
     };
 
-    LeafletMap.prototype.newRouteVis = function(filename) {
-      var call_ts_vis, self;
+    LeafletMap.prototype.newRouteVis = function() {
+      var call_ts_vis, newDate, self, url;
 
       self = this;
-      console.log('loading', filename);
+      newDate = $('select#weekday option:selected').val();
+      url = "http://hidden-cove-459.herokuapp.com/schedule?" + ("route_id=" + this.currentRouteID + "&date=" + newDate);
+      console.log('loading', url);
       call_ts_vis = function(error, data) {
         return show_ts(error, data, self);
       };
-      return this._remoteRequests.push(d3.json(filename, call_ts_vis));
+      return this._remoteRequests.push(d3.json(url, call_ts_vis));
     };
 
     LeafletMap.prototype.dateChange = function() {
-      var date, filename, __this;
-
-      __this = this;
       this.cancelOtherVis();
-      date = $('select#weekday option:selected').val();
-      filename = "/data/" + this.city + "/timeseries/" + date + "_" + this.currentRouteID + ".json";
-      return this.newRouteVis(filename);
+      return this.newRouteVis();
     };
 
     LeafletMap.prototype.advanceDate = function() {
@@ -209,17 +205,15 @@
     };
 
     LeafletMap.prototype._routeClick = function(elem, d) {
-      var date, filename, id_route, route, __this;
+      var route, route_id, __this;
 
       __this = this;
       route = d3.select(elem);
-      id_route = d.properties.id_route;
-      this.currentRouteID = id_route;
+      route_id = d.properties.route_id;
+      this.currentRouteID = route_id;
       d3.selectAll('#route_name').text(d.properties.route_long_name);
       this.cancelOtherVis();
-      date = $('select#weekday option:selected').val();
-      filename = "/data/" + this.city + "/timeseries/" + date + "_" + id_route + ".json";
-      return this.newRouteVis(filename);
+      return this.newRouteVis();
     };
 
     LeafletMap.prototype._loadData = function() {

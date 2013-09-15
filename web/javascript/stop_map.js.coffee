@@ -132,20 +132,21 @@ class LeafletMap
       .classed('highlighted', false)
 
 
-  newRouteVis: (filename) =>
+  newRouteVis: () =>
     self = @
-    console.log('loading', filename)
+    newDate = $('select#weekday option:selected').val()
+    # url = "http://127.0.0.1:5000/schedule" + 
+    url = "http://hidden-cove-459.herokuapp.com/schedule?" + 
+      "route_id=#{@currentRouteID}&date=#{newDate}"
+    
+    console.log('loading', url)
 
     call_ts_vis = (error, data) -> show_ts(error, data, self)
-    @_remoteRequests.push(d3.json(filename, call_ts_vis))
+    @_remoteRequests.push(d3.json(url, call_ts_vis))
 
-  dateChange: () =>
-    __this = @
+  dateChange: () ->
     @cancelOtherVis()
-
-    date = $('select#weekday option:selected').val()
-    filename = "/data/#{@city}/timeseries/#{date}_#{@currentRouteID}.json"
-    @newRouteVis(filename)
+    @newRouteVis()
 
   advanceDate: () =>
     curDate = +$('select#weekday option:selected').val()
@@ -157,16 +158,13 @@ class LeafletMap
   _routeClick: (elem, d) =>
     __this = @
     route = d3.select(elem)
-    id_route = d.properties.id_route
-    @currentRouteID = id_route
+    route_id = d.properties.route_id
+    @currentRouteID = route_id
     d3.selectAll('#route_name').text(d.properties.route_long_name)
 
     @cancelOtherVis()
-
     # load up the timeseries data for the route
-    date = $('select#weekday option:selected').val()
-    filename = "/data/#{@city}/timeseries/#{date}_#{id_route}.json"
-    @newRouteVis(filename)
+    @newRouteVis()
 
   _loadData: ->
     d3.json "/data/#{@city}/stops.json", (stops) =>
