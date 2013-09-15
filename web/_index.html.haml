@@ -79,22 +79,25 @@
         From that we built
         %a{:href => "http://urban-data.herokuapp.com/", :target => "_blank"} the original Dots on a Bus,
         which won the grand prize and funded this project for Fusepool.
+        %br/
+        %br/
+        Data for this project comes from the
+        %a{:href => "http://www.bart.gov/schedules/developers/gtfs.aspx"}BART schedule
+        and from BART's
+        %a{:href => "http://www.bart.gov/schedules/developers/gtfs-realtime.aspx"}real-time updates.
+        Both of these data sets follow the
+        %a{:href => "https://developers.google.com/transit/gtfs/"}General Transit Feed Specification,
+        which is used by many transit agencies around the world (and by the transit directions in Google Maps).
+        %br/
+        We set up a server to poll the real-time updates and serve up the modified schedules.
       %h4 Geeky details
-      %h6 Cleaning up the data
-      %p
-        The raw data needed a lot of processing before we could make our pencil and paper sketch real. Mostly this involved wrangling the three cities into a standard format (so all the column names were the same across the cities), then organizing that into JSON blobs by date and route.
-        Thanks to our favorite tools:
-        %a{:href=>"http://ipython.org/notebook.html"}IPython Notebook
-        and
-        %a{:href=>"http://pandas.pydata.org/"}Pandas
-        this was easier than it sounds.
       %h6 Visualizing the data
       %p
         From there,
         %a{:href=>"http://d3js.org/"} d3.js
         takes over. That simulation you're watching? The time is scaled to real time - 24hrs takes is played back over approximately 3min. We kick off a bunch of d3 timers - one for every trip a bus takes along the line. Then, within each trip, more timers get kicked off to add the waiting passengers to each stop and to move the bus so it arrives at each stop at the proper time. The waiting passengers arrive at a random time between when the bus is a few stops away and when it arrives. The passengers who get off at that stop exit the bus and disperse.
       %p
-        Clicking a new route on the map loads that route, and the day pulldown switches days, just as you'd expect. And a few things we couldn't resist: The skyline changes color in an ambient display of the time of day, and we drew the little bus in inbound/outbound modes, and also made it turn headlights on at night. Finally, hovering over the stop on the route visualization panel shows the street names of the stop, and highlights the stop location on the map.
+        Clicking a new route on the map loads that route, and the day pulldown switches days, just as you'd expect. And a few things we couldn't resist: The skyline changes color in an ambient display of the time of day, and we drew the little train in inbound/outbound modes. Finally, hovering over the stop on the route visualization panel shows the street names of the stop, and highlights the stop location on the map.
       %h6 Many other awesome things we used.
       %p
         Thanks are in order: The map is the beautiful
@@ -105,9 +108,7 @@
         %a{:href=>"http://bost.ocks.org/mike/leaflet/"} method,
         and we used
         %a{:href=>"https://github.com/mbostock/topojson"}TopoJSON
-        to render the routes and the stops. (Thanks
-        %a{:href=>"https://github.com/swissnexSF/Urban-Data-Challenge/commit/2fe77e36374afd33fbb618d630c5c77d9e2aae8c"}herrstucki
-        for converting for the routes to TopoJSON.) Also thanks to: Heroku, github, and the rest of the open source world.
+        to render the routes and the stops. Also thanks to: Heroku, github, and the rest of the open source world.
       %h6 We'd love to know what you thought!
       %p
         Say hi on twitter:
