@@ -6,8 +6,11 @@ colorOfDayScale.domain([0.0, 0.20, 0.21875, 0.23958333333333334, 0.25, 0.2708333
  0.7708333333333334, 0.7916666666666666, 0.8125, 0.8333333333333334, 0.8541666666666666, 0.875, 0.916].map(colorOfDayScale.invert))
 colorOfDayScale.range(["#01062d","#2b1782","#600eae","#9b13bb","#b13daf","#d086b5","#dfa7ac","#ebc8ab","#f3dfbc","#fef6aa","#fefdea","#fbf4a5","#f0d681","#fbf8da","#f5f1ba","#f0e435","#f4be51","#ec2523","#a82358","#712b80","#4a3f96","#188dba","#1c71a3","#173460","#020b2f"])
 
+hourFromTS = (t) -> # take date in unix microseconds
+  return +d3.time.format.utc('%H')(new Date(t * 1e-6))
+
 colorOfDay = (t) ->
-  d3.rgb(colorOfDayScale(+d3.time.format.utc('%H')(new Date(t * 1000))))
+  d3.rgb(colorOfDayScale(hourFromTS(t)))
 
 colorOfTextScale = d3.scale.linear()
   .domain([0,23])
@@ -15,23 +18,23 @@ colorOfTextScale.domain([0.0, 0.20, 0.21875, 0.23958333333333334, 0.25, 0.270833
 colorOfTextScale.range(["#e5e7f8","#e5e7f8","#f6f2f8","#f6f2f8","#f6f2f8","#d086b5","#2c0938","#2c0938","#2c0938","#2c0938","#2c0938","#2c0938","#2c0938","#2c0938","#2c0938","#2c0938","#2c0938","#2c0938","#2c0938","#2c0938","#f6f2f8","#f6f2f8","#f6f2f8","#f6f2f8","#f6f2f8"])
 
 colorOfText = (t) ->
-  d3.rgb(colorOfTextScale(+d3.time.format.utc('%H')(new Date(t * 1000))))
+  d3.rgb(colorOfTextScale((hourFromTS(t))))
 
 updateTime = (timeDisplay, t) ->
-  curTime = new Date(t * 1000)
+  curTime = new Date(t * 1e-6)
   timeDisplay.time.text(d3.time.format.utc('%I:%M')(curTime))
   timeDisplay.ampm.text(d3.time.format.utc('%p')(curTime))
 
 isNight = (t) ->
-  hour = +d3.time.format.utc('%H')(new Date(t * 1000))
+  hour = hourFromTS(t)
   0<=hour<7 or hour>=19
 
 radiusPassenger = 3
 maxNpassengers = 5
 
 
-window.show_ts = (error, data_daily, map) ->
-
+window.show_ts = (error, data, map) ->
+  data_daily = data.data
   if error
     console.log(error.statusText)
     d3.selectAll('.normalOperation').classed('hidden', true)
@@ -95,18 +98,13 @@ window.show_ts = (error, data_daily, map) ->
   sumPpl = data_daily.trips.map (trip) ->
     d3.sum(trip.stops.map (stop) -> stop.count_boarding)
 
-  if d3.max(sumPpl) > 100 and map.city == 'geneva'
-    # if number of passgengers on a trip is more than 100
-    # each stop gets only one passenger circle
-    # but scaled to a radius representing how many passengers
-    countScale = (c) -> 1 # Math.min(c, maxNpassengers)
-    radiusPassengerScale = d3.scale.linear()
-      .domain([1, mostStopPgrs+5])
-      .range([radiusPassenger, 15])
-  else
-    # otherwise - one circle = one passenger
-    countScale = (c) -> c
-    radiusPassengerScale = (c) -> radiusPassenger
+  # if number of passgengers on a trip is more than 100
+  # each stop gets only one passenger circle
+  # but scaled to a radius representing how many passengers
+  countScale = (c) -> 1
+  radiusPassengerScale = d3.scale.linear()
+    .domain([1, mostStopPgrs+5])
+    .range([radiusPassenger, 15])
 
 
   yPos = yScale(0.5)
@@ -173,9 +171,15 @@ window.show_ts = (error, data_daily, map) ->
       cx: (d) -> xScale(d.distance)
       cy: (d) -> yScale(yValStop(d.direction))
 
+  
+  select_map_circle = (id_stop) -> 
+    return map.g.selectAll('circle').filter (d) -> 
+      d.properties.stop_id == id_stop
+    
   # add mouse interaction
   vis_highlight_stop = (d, elem) ->
-    map_circle = map.g.selectAll("circle.bus-stop-#{d.id_stop}")
+    map_circle = select_map_circle(d.id_stop)
+    
     map_circle
       .moveToFront()
       .classed('highlighted', true)
@@ -191,13 +195,13 @@ window.show_ts = (error, data_daily, map) ->
           .attr('r', visStopRadius*2)
       # show the stop name
       stopNameDisplay
-        .text(map_circle.data()[0].properties.name_stop)
+        .text(map_circle.data()[0].properties.stop_name)
         .attr
           x: vis_circle.attr('cx')
           y: +vis_circle.attr('cy') - 20
 
   vis_unhighlight_stop = (d, elem) ->
-    map_circle = map.g.selectAll("circle.bus-stop-#{d.id_stop}")
+    map_circle = select_map_circle(d.id_stop)
     map_circle
       .classed('highlighted', false)
       .transition()
@@ -343,7 +347,7 @@ window.show_ts = (error, data_daily, map) ->
       departing_data = ({
         xEnd: xScale(xVal(stop)) + (Math.random() - 0.5) * width / data_stops.length,
         yEnd: randomYpos(data_trip.trip_direction)
-        } for i in _.range(stop.count_exiting))
+        } for i in _.range(countScale(stop.count_exiting)))
       # return if stop.count_exiting == 0
       departing_passengers = g.selectAll("circle.passenger-departing-#{id_trip}-#{stop_number}")
         .data(departing_data)
@@ -352,7 +356,7 @@ window.show_ts = (error, data_daily, map) ->
           class: "passenger-departing passenger-departing-#{id_trip}-#{stop_number}"
           cx: xScale(xVal(stop))
           cy: yScaledValDoorsBus(data_trip.trip_direction)
-          r: 3
+          r: radiusPassengerScale(stop.count_exiting)
         .style
           fill: '#eee' # color_filler(stop_number)
           stroke: d3.rgb(color_filler(stop_number)).darker(2)

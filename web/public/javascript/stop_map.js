@@ -3,16 +3,18 @@
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   LeafletMap = (function() {
-    var CITY_CENTER, DEFAULT_ROUTES;
+    var CITY_CENTER, CITY_ZOOM, DEFAULT_ROUTES;
 
     CITY_CENTER = {
-      "san-francisco": [37.783333, -122.416667]
+      "san-francisco": [37.783333, -122.216667]
+    };
+
+    CITY_ZOOM = {
+      "san-francisco": 10
     };
 
     DEFAULT_ROUTES = {
-      'san-francisco': "airbart-dn.csv",
-      'geneva': 19,
-      'zurich': 9
+      'san-francisco': '01'
     };
 
     function LeafletMap(mapContainerId, city) {
@@ -35,8 +37,8 @@
     LeafletMap.prototype.projection = function(x) {
       var point;
 
-      if (x[0] > 0) {
-        point = this._map.latLngToLayerPoint(new L.LatLng(x[0], x[1]));
+      if (x[1] > 0) {
+        point = this._map.latLngToLayerPoint(new L.LatLng(x[1], x[0]));
         this._previousPoint = point;
         return [point.x, point.y];
       } else if ((this._previousPoint != null)) {
@@ -74,6 +76,7 @@
       if (this._busStops !== undefined) {
         this._busStops.attr({
           cx: function(d, i) {
+            console.log(_this._stopCoordinates[i]);
             return _this.projection(_this._stopCoordinates[i])[0];
           },
           cy: function(d, i) {
@@ -89,7 +92,7 @@
     LeafletMap.prototype._generateMap = function() {
       this._map = L.map(this.mapContainerId, {
         center: CITY_CENTER[this.city],
-        zoom: 13,
+        zoom: CITY_ZOOM[this.city],
         zoomControl: false
       }).addLayer(new L.tileLayer("http://{s}.tile.cloudmade.com/62541519723e4a6abd36d8a4bb4d6ac3/998/256/{z}/{x}/{y}.png", {
         attribution: "",
@@ -184,24 +187,22 @@
       return this.g.selectAll("circle.bus-stop").classed('highlighted', false);
     };
 
-    LeafletMap.prototype.newRouteVis = function(filename) {
-      var call_ts_vis, self;
+    LeafletMap.prototype.newRouteVis = function() {
+      var call_ts_vis, newDate, self, url;
 
       self = this;
+      newDate = $('select#weekday option:selected').val();
+      url = "http://hidden-cove-4519.herokuapp.com/schedule?" + ("route_id=" + this.currentRouteID);
+      console.log('loading', url);
       call_ts_vis = function(error, data) {
         return show_ts(error, data, self);
       };
-      return this._remoteRequests.push(d3.json(filename, call_ts_vis));
+      return this._remoteRequests.push(d3.json(url, call_ts_vis));
     };
 
     LeafletMap.prototype.dateChange = function() {
-      var date, filename, __this;
-
-      __this = this;
       this.cancelOtherVis();
-      date = $('select#weekday option:selected').val();
-      filename = "/data/" + this.city + "/timeseries/" + date + "_" + this.currentRouteID + ".json";
-      return this.newRouteVis(filename);
+      return this.newRouteVis();
     };
 
     LeafletMap.prototype.advanceDate = function() {
@@ -214,17 +215,15 @@
     };
 
     LeafletMap.prototype._routeClick = function(elem, d) {
-      var date, filename, route, route_id, __this;
+      var route, route_id, __this;
 
       __this = this;
       route = d3.select(elem);
-      route_id = d.properties.shape_id;
+      route_id = d.properties.route_id;
       this.currentRouteID = route_id;
-      d3.selectAll('#route_name').text(toTitleCase(d.properties.shape_id));
+      d3.selectAll('#route_name').text(d.properties.route_long_name);
       this.cancelOtherVis();
-      date = $('select#weekday option:selected').val();
-      filename = "/data/" + this.city + "/timeseries/" + date + "_" + route_id + ".json";
-      return this.newRouteVis(filename);
+      return this.newRouteVis();
     };
 
     LeafletMap.prototype._loadData = function() {
@@ -272,16 +271,13 @@
         d3.json("/data/" + _this.city + "/routes.json", function(routes) {
           var defaultRoute;
 
-          _this._foo = topojson.object(routes, routes.objects.shapes).geometries;
-          _this._busRoutes = _this.g.selectAll("path.bus-route").data(topojson.object(routes, routes.objects.shapes).geometries).enter().append("path").attr({
+          _this._busRoutes = _this.g.selectAll("path.bus-route").data(topojson.object(routes, routes.objects.routes).geometries).enter().append("path").attr({
             "class": function(d) {
-              return "bus-route bus-route-" + d.properties.shape_id;
+              return "bus-route bus-route-" + d.properties.route_id;
             },
-            d: function(d, i) {
-              return _this._path(_this._foo[i]);
-            }
+            d: _this._path
           }).style("stroke", function(d) {
-            return __this._colorScale(d.properties.shape_id);
+            return '#' + d.properties.route_color;
           }).on("mouseover", function(d) {
             return __this._routeMouseover(this, d);
           }).on("mouseout", function(d) {
@@ -290,8 +286,8 @@
             return __this._routeClick(this, d);
           });
           $('select#weekday').change(_this.dateChange);
-          defaultRoute = routes.objects.shapes.geometries.filter(function(route) {
-            return ("" + route.properties.shape_id) === ("" + DEFAULT_ROUTES[__this.city]);
+          defaultRoute = routes.objects.routes.geometries.filter(function(route) {
+            return ("" + route.properties.route_id) === ("" + DEFAULT_ROUTES[__this.city]);
           });
           _this._routeClick(null, defaultRoute[0]);
         });

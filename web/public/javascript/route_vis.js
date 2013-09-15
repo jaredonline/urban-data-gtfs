@@ -1,5 +1,5 @@
 (function() {
-  var colorOfDay, colorOfDayScale, colorOfText, colorOfTextScale, isNight, maxNpassengers, playbackTmax, radiusPassenger, updateTime;
+  var colorOfDay, colorOfDayScale, colorOfText, colorOfTextScale, hourFromTS, isNight, maxNpassengers, playbackTmax, radiusPassenger, updateTime;
 
   playbackTmax = 3 * 60 * 1000;
 
@@ -9,8 +9,12 @@
 
   colorOfDayScale.range(["#01062d", "#2b1782", "#600eae", "#9b13bb", "#b13daf", "#d086b5", "#dfa7ac", "#ebc8ab", "#f3dfbc", "#fef6aa", "#fefdea", "#fbf4a5", "#f0d681", "#fbf8da", "#f5f1ba", "#f0e435", "#f4be51", "#ec2523", "#a82358", "#712b80", "#4a3f96", "#188dba", "#1c71a3", "#173460", "#020b2f"]);
 
+  hourFromTS = function(t) {
+    return +d3.time.format.utc('%H')(new Date(t * 1e-6));
+  };
+
   colorOfDay = function(t) {
-    return d3.rgb(colorOfDayScale(+d3.time.format.utc('%H')(new Date(t * 1000))));
+    return d3.rgb(colorOfDayScale(hourFromTS(t)));
   };
 
   colorOfTextScale = d3.scale.linear().domain([0, 23]);
@@ -20,13 +24,13 @@
   colorOfTextScale.range(["#e5e7f8", "#e5e7f8", "#f6f2f8", "#f6f2f8", "#f6f2f8", "#d086b5", "#2c0938", "#2c0938", "#2c0938", "#2c0938", "#2c0938", "#2c0938", "#2c0938", "#2c0938", "#2c0938", "#2c0938", "#2c0938", "#2c0938", "#2c0938", "#2c0938", "#f6f2f8", "#f6f2f8", "#f6f2f8", "#f6f2f8", "#f6f2f8"]);
 
   colorOfText = function(t) {
-    return d3.rgb(colorOfTextScale(+d3.time.format.utc('%H')(new Date(t * 1000))));
+    return d3.rgb(colorOfTextScale(hourFromTS(t)));
   };
 
   updateTime = function(timeDisplay, t) {
     var curTime;
 
-    curTime = new Date(t * 1000);
+    curTime = new Date(t * 1e-6);
     timeDisplay.time.text(d3.time.format.utc('%I:%M')(curTime));
     return timeDisplay.ampm.text(d3.time.format.utc('%p')(curTime));
   };
@@ -34,7 +38,7 @@
   isNight = function(t) {
     var hour;
 
-    hour = +d3.time.format.utc('%H')(new Date(t * 1000));
+    hour = hourFromTS(t);
     return (0 <= hour && hour < 7) || hour >= 19;
   };
 
@@ -42,9 +46,10 @@
 
   maxNpassengers = 5;
 
-  window.show_ts = function(error, data_daily, map) {
-    var all_timers, begin_bus_trip, color_filler, countScale, force_layout, fraction_stopped_time, g, height, line, line_maker, margin, mostStopPgrs, rScale, rVal, radiusPassengerScale, randomYpos, routePath, stopNameDisplay, stop_dists, stops, sumPpl, svg_route, tDepartureVal, tScale, tVal, timeDisplay, visStopRadius, vis_highlight_stop, vis_unhighlight_stop, width, xScale, xScaledValBus, xVal, yPos, yPosPassengers, yScale, yScaledValDoorsBus, yValBus, yValStop;
+  window.show_ts = function(error, data, map) {
+    var all_timers, begin_bus_trip, color_filler, countScale, data_daily, force_layout, fraction_stopped_time, g, height, line, line_maker, margin, mostStopPgrs, rScale, rVal, radiusPassengerScale, randomYpos, routePath, select_map_circle, stopNameDisplay, stop_dists, stops, sumPpl, svg_route, tDepartureVal, tScale, tVal, timeDisplay, visStopRadius, vis_highlight_stop, vis_unhighlight_stop, width, xScale, xScaledValBus, xVal, yPos, yPosPassengers, yScale, yScaledValDoorsBus, yValBus, yValStop;
 
+    data_daily = data.data;
     if (error) {
       console.log(error.statusText);
       d3.selectAll('.normalOperation').classed('hidden', true);
@@ -104,19 +109,10 @@
         return stop.count_boarding;
       }));
     });
-    if (d3.max(sumPpl) > 100 && map.city === 'geneva') {
-      countScale = function(c) {
-        return 1;
-      };
-      radiusPassengerScale = d3.scale.linear().domain([1, mostStopPgrs + 5]).range([radiusPassenger, 15]);
-    } else {
-      countScale = function(c) {
-        return c;
-      };
-      radiusPassengerScale = function(c) {
-        return radiusPassenger;
-      };
-    }
+    countScale = function(c) {
+      return 1;
+    };
+    radiusPassengerScale = d3.scale.linear().domain([1, mostStopPgrs + 5]).range([radiusPassenger, 15]);
     yPos = yScale(0.5);
     yPosPassengers = yScale(0.4);
     yValStop = function(dir) {
@@ -189,16 +185,21 @@
         return yScale(yValStop(d.direction));
       }
     });
+    select_map_circle = function(id_stop) {
+      return map.g.selectAll('circle').filter(function(d) {
+        return d.properties.stop_id === id_stop;
+      });
+    };
     vis_highlight_stop = function(d, elem) {
       var map_circle, vis_circle;
 
-      map_circle = map.g.selectAll("circle.bus-stop-" + d.id_stop);
+      map_circle = select_map_circle(d.id_stop);
       map_circle.moveToFront().classed('highlighted', true).transition().attr('r', map.busStopRadius * 3);
       if (elem) {
         map_circle.classed('user-highlighted', true);
         vis_circle = d3.select(elem);
         vis_circle.classed('user-highlighted', true).moveToFront().transition().attr('r', visStopRadius * 2);
-        return stopNameDisplay.text(map_circle.data()[0].properties.name_stop).attr({
+        return stopNameDisplay.text(map_circle.data()[0].properties.stop_name).attr({
           x: vis_circle.attr('cx'),
           y: +vis_circle.attr('cy') - 20
         });
@@ -207,7 +208,7 @@
     vis_unhighlight_stop = function(d, elem) {
       var map_circle;
 
-      map_circle = map.g.selectAll("circle.bus-stop-" + d.id_stop);
+      map_circle = select_map_circle(d.id_stop);
       map_circle.classed('highlighted', false).transition().attr('r', map.busStopRadius);
       if (elem) {
         map_circle.classed('user-highlighted', false);
@@ -352,7 +353,7 @@
         departing_data = (function() {
           var _i, _len, _ref, _results;
 
-          _ref = _.range(stop.count_exiting);
+          _ref = _.range(countScale(stop.count_exiting));
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             i = _ref[_i];
@@ -368,7 +369,7 @@
           "class": "passenger-departing passenger-departing-" + id_trip + "-" + stop_number,
           cx: xScale(xVal(stop)),
           cy: yScaledValDoorsBus(data_trip.trip_direction),
-          r: 3
+          r: radiusPassengerScale(stop.count_exiting)
         }).style({
           fill: '#eee',
           stroke: d3.rgb(color_filler(stop_number)).darker(2),
