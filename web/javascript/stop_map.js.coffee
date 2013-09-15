@@ -192,12 +192,12 @@ class LeafletMap
 
       @_bounds = [
         [
-          d3.min(@_stopCoordinates, (d) -> d[0]),
-          d3.min(@_stopCoordinates, (d) -> d[1])
+          d3.min(@_stopCoordinates, (d) -> d[0]) - 10,
+          d3.min(@_stopCoordinates, (d) -> d[1]) - 10
         ],
         [
-          d3.max(@_stopCoordinates, (d) -> d[0]),
-          d3.max(@_stopCoordinates, (d) -> d[1])
+          d3.max(@_stopCoordinates, (d) -> d[0]) + 10,
+          d3.max(@_stopCoordinates, (d) -> d[1]) + 10
         ]
       ]
 

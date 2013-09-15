@@ -252,15 +252,15 @@
           [
             d3.min(_this._stopCoordinates, function(d) {
               return d[0];
-            }), d3.min(_this._stopCoordinates, function(d) {
+            }) - 10, d3.min(_this._stopCoordinates, function(d) {
               return d[1];
-            })
+            }) - 10
           ], [
             d3.max(_this._stopCoordinates, function(d) {
               return d[0];
-            }), d3.max(_this._stopCoordinates, function(d) {
+            }) + 10, d3.max(_this._stopCoordinates, function(d) {
               return d[1];
-            })
+            }) + 10
           ]
         ];
         _this._map.on("viewreset", function() {
