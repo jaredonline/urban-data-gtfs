@@ -1,11 +1,11 @@
 class LeafletMap
   CITY_CENTER =
-    "san-francisco": [37.783333, -122.416667]
-
+    "san-francisco": [37.783333, -122.216667]
+  CITY_ZOOM = 
+    "san-francisco": 10
+    
   DEFAULT_ROUTES =
-    'san-francisco': 5
-    'geneva':        19
-    'zurich':        9
+    'san-francisco': '01'
 
   constructor: (@mapContainerId, @city) ->
     @_generateMap()
@@ -57,7 +57,7 @@ class LeafletMap
   _generateMap: ->
     @_map = L.map(@mapContainerId, {
       center: CITY_CENTER[@city],
-      zoom:   13
+      zoom:   CITY_ZOOM[@city]
       zoomControl: false}).addLayer(new L.tileLayer("http://{s}.tile.cloudmade.com/62541519723e4a6abd36d8a4bb4d6ac3/998/256/{z}/{x}/{y}.png", {
         attribution: "",
         maxZoom: 16,
@@ -159,7 +159,7 @@ class LeafletMap
     route = d3.select(elem)
     id_route = d.properties.id_route
     @currentRouteID = id_route
-    d3.selectAll('#route_name').text(toTitleCase(d.properties.name_route))
+    d3.selectAll('#route_name').text(d.properties.route_long_name)
 
     @cancelOtherVis()
 
@@ -203,10 +203,10 @@ class LeafletMap
         @_busRoutes = @g.selectAll("path.bus-route")
           .data(topojson.object(routes, routes.objects.routes).geometries).enter()
           .append("path").attr(
-            class: (d) -> "bus-route bus-route-#{d.properties.id_route}"
+            class: (d) -> "bus-route bus-route-#{d.properties.route_id}"
             d: @_path
           )
-            .style("stroke", (d) -> __this._colorScale(d.properties.id_route))
+            .style("stroke", (d) -> '#' + d.properties.route_color)
             .on("mouseover", (d) -> __this._routeMouseover(this, d))
             .on("mouseout", (d) -> __this._routeMouseout(this, d))
             .on("click", (d) -> __this._routeClick(this, d))
@@ -215,7 +215,7 @@ class LeafletMap
         $('select#weekday').change(@dateChange)
         # start the thing off with a default route
         defaultRoute = routes.objects.routes.geometries.filter (route) ->
-          "#{route.properties.id_route}" == "#{DEFAULT_ROUTES[__this.city]}"
+          "#{route.properties.route_id}" == "#{DEFAULT_ROUTES[__this.city]}"
         @_routeClick(null, defaultRoute[0])
         return
       return

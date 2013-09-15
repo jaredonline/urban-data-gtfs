@@ -3,18 +3,18 @@
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   LeafletMap = (function() {
-    var CITY_CENTER, DEFAULT_ROUTES;
+    var CITY_CENTER, CITY_ZOOM, DEFAULT_ROUTES;
 
     CITY_CENTER = {
-      "san-francisco": [37.783333, -122.416667],
-      geneva: [46.2, 6.15],
-      zurich: [47.366667, 8.55]
+      "san-francisco": [37.783333, -122.216667]
+    };
+
+    CITY_ZOOM = {
+      "san-francisco": 10
     };
 
     DEFAULT_ROUTES = {
-      'san-francisco': 5,
-      'geneva': 19,
-      'zurich': 9
+      'san-francisco': '01'
     };
 
     function LeafletMap(mapContainerId, city) {
@@ -83,7 +83,7 @@
     LeafletMap.prototype._generateMap = function() {
       this._map = L.map(this.mapContainerId, {
         center: CITY_CENTER[this.city],
-        zoom: 13,
+        zoom: CITY_ZOOM[this.city],
         zoomControl: false
       }).addLayer(new L.tileLayer("http://{s}.tile.cloudmade.com/62541519723e4a6abd36d8a4bb4d6ac3/998/256/{z}/{x}/{y}.png", {
         attribution: "",
@@ -215,7 +215,7 @@
       route = d3.select(elem);
       id_route = d.properties.id_route;
       this.currentRouteID = id_route;
-      d3.selectAll('#route_name').text(toTitleCase(d.properties.name_route));
+      d3.selectAll('#route_name').text(d.properties.route_long_name);
       this.cancelOtherVis();
       date = $('select#weekday option:selected').val();
       filename = "/data/" + this.city + "/timeseries/" + date + "_" + id_route + ".json";
@@ -269,11 +269,11 @@
 
           _this._busRoutes = _this.g.selectAll("path.bus-route").data(topojson.object(routes, routes.objects.routes).geometries).enter().append("path").attr({
             "class": function(d) {
-              return "bus-route bus-route-" + d.properties.id_route;
+              return "bus-route bus-route-" + d.properties.route_id;
             },
             d: _this._path
           }).style("stroke", function(d) {
-            return __this._colorScale(d.properties.id_route);
+            return '#' + d.properties.route_color;
           }).on("mouseover", function(d) {
             return __this._routeMouseover(this, d);
           }).on("mouseout", function(d) {
@@ -283,7 +283,7 @@
           });
           $('select#weekday').change(_this.dateChange);
           defaultRoute = routes.objects.routes.geometries.filter(function(route) {
-            return ("" + route.properties.id_route) === ("" + DEFAULT_ROUTES[__this.city]);
+            return ("" + route.properties.route_id) === ("" + DEFAULT_ROUTES[__this.city]);
           });
           _this._routeClick(null, defaultRoute[0]);
         });
