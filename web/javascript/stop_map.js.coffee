@@ -147,8 +147,11 @@ class LeafletMap
       "route_id=#{@currentRouteID}" # + "&date=#{newDate}"
 
     console.log('loading', url)
+    $('#loading-msg').show()
 
-    call_ts_vis = (error, data) -> show_ts(error, data, self)
+    call_ts_vis = (error, data) -> 
+      $('#loading-msg').hide() # loaded
+      show_ts(error, data, self)
     @_remoteRequests.push(d3.json(url, call_ts_vis))
 
   dateChange: () =>

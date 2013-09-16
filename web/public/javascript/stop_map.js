@@ -193,7 +193,9 @@
       newDate = $('select#weekday option:selected').val();
       url = "http://hidden-cove-4519.herokuapp.com/schedule?" + ("route_id=" + this.currentRouteID);
       console.log('loading', url);
+      $('#loading-msg').show();
       call_ts_vis = function(error, data) {
+        $('#loading-msg').hide();
         return show_ts(error, data, self);
       };
       return this._remoteRequests.push(d3.json(url, call_ts_vis));
