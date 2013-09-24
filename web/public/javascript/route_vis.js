@@ -31,8 +31,15 @@
     var curTime;
 
     curTime = new Date(t * 1e-6);
-    timeDisplay.time.text(d3.time.format.utc('%I:%M')(curTime));
-    return timeDisplay.ampm.text(d3.time.format.utc('%p')(curTime));
+    if (timeDisplay.datetime == null) {
+      return timeDisplay.datetime = t;
+    } else if (timeDisplay.datetime > t) {
+
+    } else {
+      timeDisplay.datetime = t;
+      timeDisplay.time.text(d3.time.format.utc('%I:%M')(curTime));
+      return timeDisplay.ampm.text(d3.time.format.utc('%p')(curTime));
+    }
   };
 
   isNight = function(t) {
@@ -91,7 +98,8 @@
     timeDisplay = {
       time: d3.select('#time-display > .time'),
       ampm: d3.select('#time-display > .ampm'),
-      weekday: d3.select('#time-display > .weekday')
+      weekday: d3.select('#time-display > .weekday'),
+      datetime: null
     };
     stopNameDisplay = g.append('text').attr({
       id: 'stop-name-sign',

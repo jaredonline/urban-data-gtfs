@@ -22,8 +22,14 @@ colorOfText = (t) ->
 
 updateTime = (timeDisplay, t) ->
   curTime = new Date(t * 1e-6)
-  timeDisplay.time.text(d3.time.format.utc('%I:%M')(curTime))
-  timeDisplay.ampm.text(d3.time.format.utc('%p')(curTime))
+  if !timeDisplay.datetime?
+    timeDisplay.datetime = t
+  else if timeDisplay.datetime > t
+    return # don't skip backward in time
+  else
+    timeDisplay.datetime = t
+    timeDisplay.time.text(d3.time.format.utc('%I:%M')(curTime))
+    timeDisplay.ampm.text(d3.time.format.utc('%p')(curTime))
 
 isNight = (t) ->
   hour = hourFromTS(t)
@@ -74,6 +80,7 @@ window.show_ts = (error, data, map) ->
     time: d3.select('#time-display > .time')
     ampm: d3.select('#time-display > .ampm')
     weekday: d3.select('#time-display > .weekday')
+    datetime: null
 
   stopNameDisplay = g.append('text')
     .attr
