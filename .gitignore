@@ -2,3 +2,5 @@
 *.pyc
 build/
 urban-data-parser/data/*/*.hd5
+report/
+*.sass-cache
