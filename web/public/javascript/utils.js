@@ -77,4 +77,8 @@
     });
   };
 
+  window.addDays = function(date, Ndays) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() + Ndays, date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds());
+  };
+
 }).call(this);

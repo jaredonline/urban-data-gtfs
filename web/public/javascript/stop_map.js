@@ -1,5 +1,5 @@
 (function() {
-  var LeafletMap,
+  var LeafletMap, addDateOpt, dates, today,
     __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
 
   LeafletMap = (function() {
@@ -298,6 +298,27 @@
     return LeafletMap;
 
   })();
+
+  addDateOpt = function(date) {
+    return $('select#weekday').append($("<option></option>").attr("value", d3.time.format('%Y%m%d')(date)).text(d3.time.format('%A')(date)));
+  };
+
+  today = new Date();
+
+  dates = {};
+
+  _.range(7).forEach(function(n) {
+    var d;
+
+    d = addDays(today, -1 * n);
+    return dates[d.getDay()] = d;
+  });
+
+  _.range(1, 7).forEach(function(n) {
+    return addDateOpt(dates[n]);
+  });
+
+  addDateOpt(dates[0]);
 
   new LeafletMap("map", window.city_name);
 

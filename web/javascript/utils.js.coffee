@@ -49,3 +49,7 @@ window.toTitleCase = (str) ->
 d3.selection::moveToFront = ->
   @each ->
     @parentNode.appendChild this
+
+
+window.addDays = (date, Ndays) ->
+  new Date(date.getFullYear(), date.getMonth(), date.getDate() + Ndays,   date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds())

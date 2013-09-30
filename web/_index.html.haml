@@ -38,13 +38,6 @@
         %span.errorState.hidden running on
       %span
         %select#weekday
-          %option{:value=>20130916} Monday
-          %option{:value=>20130917} Tuesday
-          %option{:value=>20130911} Wednesday
-          %option{:value=>20130912} Thursday
-          %option{:value=>20130913} Friday
-          %option{:value=>20130914} Saturday
-          %option{:value=>20130915} Sunday
       %span.normalOperation ?
     #route_vis
   #map
@@ -122,7 +115,7 @@
 
 
   :javascript
-    city_name = "#{city_name}"
+    city_name = "#{city_name}"    
   %script{:src => "/javascript/stop_map.js"}
 
   :javascript

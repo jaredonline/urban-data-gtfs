@@ -230,4 +230,19 @@ class LeafletMap
         return
       return
 
+# add the previous weeks dates to the select weekday option
+addDateOpt = (date) ->
+  $('select#weekday').append(
+    $("<option></option>")
+      .attr("value", d3.time.format('%Y%m%d')(date))
+      .text(d3.time.format('%A')(date)))
+today = new Date()
+dates = {}
+_.range(7).forEach (n) ->
+  d = addDays(today, -1 * n)
+  dates[d.getDay()] = d
+_.range(1,7).forEach (n) ->
+  addDateOpt(dates[n])
+addDateOpt(dates[0])
+
 new LeafletMap "map", window.city_name
